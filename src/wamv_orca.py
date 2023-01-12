@@ -39,12 +39,13 @@ class WAMVORCA():
 
         self.obs_pos_list = []
         self.obs_vertics_list = []
-        with open("/home/argrobotx/robotx-2022/duckiepond-devices/obs_pos.yaml") as file:
+        with open("/home/argrobotx/robotx-2022/duckiepond-devices/marine_obs_pos.yaml") as file:
             total_obs_list = yaml.safe_load(file)
 
         for key, value in total_obs_list.items():
             for pos_key, pos_value in value.items():
                 self.obs_pos_list.append(pos_value)
+
         for i in range(len(self.obs_pos_list)):
             self.obs_vertics_list.append([self.obs_pos_list[i][0]+2, self.obs_pos_list[i][1]+2])
             self.obs_vertics_list.append([self.obs_pos_list[i][0]+2, self.obs_pos_list[i][1]-2])
@@ -63,10 +64,10 @@ class WAMVORCA():
         self.pub_cmd = rospy.Publisher("cmd_out", Twist, queue_size=1)
         self.timer = rospy.Timer(rospy.Duration(0.1), self.start_orca)
         self.sim = rvo2.PyRVOSimulator(1/60., 1.5, 10, 1.5, 2, 3.5, 1)
-        self.a0 = self.sim.addAgent((-536, 222.7))
+        self.a0 = self.sim.addAgent((0, 0))
         self.sim.setAgentPrefVelocity(self.a0, (1, 1))
-        self.radius = 3.5
-        self.dis_tre = 5
+        self.radius = 0.75
+        self.dis_tre = 4.5
         self.sim.setAgentRadius(self.a0, self.radius)
         self.sim.addObstacle(self.obs_pos_list)
         # self.sim.addObstacle(self.obs_vertics_list)
@@ -119,7 +120,7 @@ class WAMVORCA():
             dis, angle = self.process_ang_dis(velocity_get[0], velocity_get[1], self.yaw)
             # positions = ['(%5.3f, %5.3f)' % self.sim.getAgentPosition(self.a0)]
             # print("orca pos:", positions)
-            # print("dis: ", dis, "angle: ", angle)
+            print("dis: ", dis, "angle: ", angle)
 
             goal_distance = self.get_distance(self.robot_position[i], self.goal[i])
             if(goal_distance < self.dis_tre):
@@ -133,8 +134,14 @@ class WAMVORCA():
                 return
 
             cmd = Twist()
-            cmd.linear.x = dis * 0.35
+            if dis < 0.3:
+                cmd.linear.x = dis
+            else:
+                cmd.linear.x = dis * 0.5
+
             cmd.angular.z = angle * 0.95
+            if(dis < 0.125):
+                cmd.linear.x = 0.25
 
         self.pub_cmd.publish(cmd)
         

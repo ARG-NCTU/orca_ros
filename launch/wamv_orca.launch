@@ -1,0 +1,16 @@
+<?xml version="1.0" ?>
+
+<launch>
+
+    <arg name="veh" default="wamv" />
+
+    <!-- truth_map_odometry -->
+    <group ns="$(arg veh)">
+        <node pkg="orca_ros" type="wamv_orca.py" name="wamv_orca" output="screen">
+            <remap from="goal_in" to="/move_base_simple/goal" />
+            <remap from="odom_in" to="truth_map_odometry" />
+            <remap from="cmd_out" to="cmd_vel" />
+        </node>
+    </group>
+
+</launch>
